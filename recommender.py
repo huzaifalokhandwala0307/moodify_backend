@@ -22,8 +22,8 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from dotenv import load_dotenv
-from backend.database import get_db
-from backend.utils.personalization import get_dominant_clusters
+from database import get_db
+from utils.personalization import get_dominant_clusters
 
 from pathlib import Path
 
