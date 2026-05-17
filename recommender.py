@@ -25,11 +25,8 @@ from dotenv import load_dotenv
 from database import get_db
 from utils.personalization import get_dominant_clusters
 
-from pathlib import Path
-
-BASE_DIR = Path(__file__).resolve().parent
-MODEL_PATH = BASE_DIR / "model" / "kmeans_model.pkl"
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    
 load_dotenv()
 
 logger = logging.getLogger("moodify.recommender")
