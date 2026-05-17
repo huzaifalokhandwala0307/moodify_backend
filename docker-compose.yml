@@ -1,0 +1,55 @@
+# ─── Moodify Docker Compose ──────────────────────────────────
+# Services: moodify-backend + redis (for future caching)
+
+version: "3.9"
+
+services:
+  # ─── Moodify Backend API ─────────────────────────────────
+  moodify-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: moodify-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount data and model directories for hot-swapping
+      - ./data:/app/data:ro
+      - ./model:/app/model:ro
+    env_file:
+      - .env
+    environment:
+      - MODEL_PATH=model/kmeans_model.pkl
+      - DATA_PATH=data/songs_clustered.csv
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - moodify-network
+
+  # ─── Redis (for future caching layer) ───────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: moodify-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - moodify-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+# ─── Volumes ─────────────────────────────────────────────────
+volumes:
+  redis-data:
+    driver: local
+
+# ─── Networks ────────────────────────────────────────────────
+networks:
+  moodify-network:
+    driver: bridge
