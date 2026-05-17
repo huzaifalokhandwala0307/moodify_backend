@@ -102,11 +102,11 @@ async def log_requests(request: Request, call_next):
     return response
 
 # ─── Register route modules ──────────────────────────────────
-from .routes.health import router as health_router
-from .routes.songs import router as songs_router
-from .routes.recommend import router as recommend_router
-from .routes.auth import router as auth_router
-from .routes.user import router as user_router
+from routes.health import router as health_router
+from routes.songs import router as songs_router
+from routes.recommend import router as recommend_router
+from routes.auth import router as auth_router
+from routes.user import router as user_router
 
 # Add rate limits to routers
 app.include_router(health_router)
