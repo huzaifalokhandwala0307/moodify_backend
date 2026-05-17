@@ -12,9 +12,9 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional
 
-from backend.services.recommendation_service import recommendation_service
-from backend.utils.schemas import RecommendResult
-from backend.auth import get_current_user_id
+from services.recommendation_service import recommendation_service
+from utils.schemas import RecommendResult
+from auth import get_current_user_id
 
 router = APIRouter(prefix="/recommend", tags=["Recommendations"])
 

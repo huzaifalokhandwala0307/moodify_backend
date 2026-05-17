@@ -10,9 +10,9 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter
 
-from backend.recommender import get_model
-from backend.database import get_db
-from backend.utils.schemas import HealthResponse
+from recommender import get_model
+from database import get_db
+from utils.schemas import HealthResponse
 
 router = APIRouter(tags=["Health"])
 

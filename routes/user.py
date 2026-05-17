@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
-from backend.database import get_db
-from backend.auth import get_current_user_id
-from backend.utils.schemas import (
+from database import get_db
+from auth import get_current_user_id
+from utils.schemas import (
     UserProfile, HistoryCreate, LikeCreate, SaveCreate, PreferencesUpdate, SongResponse
 )
 

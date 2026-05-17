@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query, Path
 
-from backend.recommender import search_songs, get_song_detail
-from backend.utils.schemas import SongResponse, SongDetailResponse, SearchResponse
+from recommender import search_songs, get_song_detail
+from utils.schemas import SongResponse, SongDetailResponse, SearchResponse
 
 router = APIRouter(prefix="/songs", tags=["Songs"])
 
