@@ -27,9 +27,8 @@ from utils.personalization import get_dominant_clusters
 
 from pathlib import Path
 
-# BASE_DIR = Path(__file__).resolve().parent
-# DEFAULT_MODEL_PATH = BASE_DIR / "model" / "kmeans_model.pkl"
-# DEFAULT_DATA_PATH = BASE_DIR / "data" / "songs_clustered.csv"
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_PATH = BASE_DIR / "model" / "kmeans_model.pkl"
 
 load_dotenv()
 
