@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-from backend.database import get_db
+from database import get_db
 
 logger = logging.getLogger(__name__)
 

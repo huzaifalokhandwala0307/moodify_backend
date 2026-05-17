@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from backend.database import get_db
-from backend.utils.schemas import UserRegister, UserLogin, TokenResponse
+from database import get_db
+from utils.schemas import UserRegister, UserLogin, TokenResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

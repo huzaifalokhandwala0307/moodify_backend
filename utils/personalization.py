@@ -1,5 +1,5 @@
 from collections import Counter
-from backend.database import get_db
+from database import get_db
 
 def get_user_taste_profile(user_id: str) -> dict:
     """

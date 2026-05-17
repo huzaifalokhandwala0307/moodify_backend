@@ -6,11 +6,11 @@ from fastapi import HTTPException
 import joblib
 from sklearn.metrics.pairwise import cosine_similarity
 
-from backend.utils.schemas import RecommendResult, SongResponse
-from backend.services.personalization_service import PersonalizationService
-from backend.services.spotify_service import SpotifyService
-from backend.services.fallback_service import FallbackService
-from backend.cache.recommendation_cache import RecommendationCache
+from utils.schemas import RecommendResult, SongResponse
+from services.personalization_service import PersonalizationService
+from services.spotify_service import SpotifyService
+from services.fallback_service import FallbackService
+from cache.recommendation_cache import RecommendationCache
 
 features_list = [
     'danceability', 'energy', 'valence', 'tempo',
