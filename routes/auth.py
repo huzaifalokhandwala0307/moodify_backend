@@ -30,21 +30,24 @@ def register(user_data: UserRegister):
 
 @router.post("/login", response_model=TokenResponse)
 def login(user_data: UserLogin):
-    """
-    Logs in a user and returns a JWT token from Supabase.
-    """
     db = get_db()
     if not db:
         raise HTTPException(status_code=500, detail="Database connection failed")
-    
+
     try:
         res = db.auth.sign_in_with_password({
-            "email": user_data.email,
+            "email": user_data.email.strip().lower(),
             "password": user_data.password
         })
+
+        if not res.session:
+            raise HTTPException(status_code=401, detail="No session returned from Supabase")
+
         return TokenResponse(
             access_token=res.session.access_token,
             user_id=res.user.id
         )
+
     except Exception as e:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        print("LOGIN ERROR:", repr(e))
+        raise HTTPException(status_code=401, detail=f"Login failed: {e}")
