@@ -25,12 +25,15 @@ def register(user_data: UserRegister):
             }
         })
         return {"message": "User registered successfully", "user": res.user}
+        print("REGISTER EMAIL:", repr(user_data.email))
+        print("REGISTER PASSWORD LENGTH:", len(user_data.password))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/login", response_model=TokenResponse)
 def login(user_data: UserLogin):
     db = get_db()
+    
     if not db:
         raise HTTPException(status_code=500, detail="Database connection failed")
 
@@ -39,6 +42,9 @@ def login(user_data: UserLogin):
             "email": user_data.email.strip().lower(),
             "password": user_data.password
         })
+
+        print("LOGIN EMAIL:", repr(user_data.email))
+        print("LOGIN PASSWORD LENGTH:", len(user_data.password))
 
         if not res.session:
             raise HTTPException(status_code=401, detail="No session returned from Supabase")
