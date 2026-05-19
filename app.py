@@ -79,7 +79,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # ─── CORS middleware ──────────────────────────────────────────
 origins = [
-    "https://moodify-nu-henna.vercel.app"
+    "https://moodify-nu-henna.vercel.app",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
@@ -123,5 +123,5 @@ async def root(request: Request):
         "service": "Moodify API",
         "version": "1.0.0",
         "docs": "/docs",
-        "health": "/health",
+        # "health": "/health",
     }
