@@ -1,7 +1,6 @@
 import os
 import time
 import json
-import uuid
 import urllib.request
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -130,10 +129,13 @@ def get_current_user_id(
     email = payload.get("email", "")
     name = payload.get("name", "")
 
-    # Step 5 — map Firebase UID to deterministic UUID
-    user_id_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, firebase_uid))
+    # Step 5 — use Firebase UID directly (no UUID5 mapping)
+    # We no longer convert to UUID5 because profiles.id is TEXT and not
+    # tied to auth.users. Using the raw Firebase UID keeps Supabase and
+    # Firebase in sync without any custom mapping.
+    firebase_uid_str = firebase_uid
 
     # Step 6 — provision profile (never crashes auth)
-    ensure_user_profile_exists(user_id_uuid, email, name)
+    ensure_user_profile_exists(firebase_uid_str, email, name)
 
-    return user_id_uuid
+    return firebase_uid_str

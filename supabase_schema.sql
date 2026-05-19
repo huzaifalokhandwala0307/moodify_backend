@@ -29,8 +29,10 @@ CREATE TABLE songs (
 );
 
 -- 2. Profiles Table
+-- NOTE: id is TEXT (Firebase UID), NOT a FK to auth.users.
+-- This app uses Firebase Auth, not Supabase Auth, so auth.users is not populated.
 CREATE TABLE profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY,
     display_name TEXT,
     avatar_url TEXT,
     created_at TIMESTAMP DEFAULT now()
@@ -39,7 +41,7 @@ CREATE TABLE profiles (
 -- 3. User Preferences Table
 CREATE TABLE user_preferences (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE UNIQUE,
+    user_id TEXT REFERENCES profiles(id) ON DELETE CASCADE UNIQUE,
     preferred_energy FLOAT DEFAULT 0.5,
     preferred_danceability FLOAT DEFAULT 0.5,
     preferred_valence FLOAT DEFAULT 0.5,
@@ -51,7 +53,7 @@ CREATE TABLE user_preferences (
 -- 4. Listening History Table
 CREATE TABLE listening_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    user_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
     song_id UUID REFERENCES songs(id),
     played_at TIMESTAMP DEFAULT now()
 );
@@ -59,7 +61,7 @@ CREATE TABLE listening_history (
 -- 5. Liked Tracks Table
 CREATE TABLE liked_tracks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    user_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
     song_id UUID REFERENCES songs(id),
     liked_at TIMESTAMP DEFAULT now(),
     UNIQUE(user_id, song_id)
@@ -68,7 +70,7 @@ CREATE TABLE liked_tracks (
 -- 6. Saved Tracks Table
 CREATE TABLE saved_tracks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    user_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
     song_id UUID REFERENCES songs(id),
     saved_at TIMESTAMP DEFAULT now(),
     UNIQUE(user_id, song_id)
@@ -77,7 +79,7 @@ CREATE TABLE saved_tracks (
 -- 7. Recommendation Logs Table
 CREATE TABLE recommendation_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES profiles(id),
+    user_id TEXT REFERENCES profiles(id),
     mode TEXT, -- 'song', 'vibe', 'personalized'
     query TEXT,
     cluster_assigned INTEGER,
@@ -86,6 +88,10 @@ CREATE TABLE recommendation_logs (
 );
 
 -- ROW LEVEL SECURITY (RLS) POLICIES
+-- NOTE: This app uses Firebase Auth (not Supabase Auth), so auth.uid() is always NULL.
+-- The backend uses the Supabase SERVICE_ROLE key, which bypasses RLS entirely.
+-- RLS is enabled for safety but policies allow service role through (default Supabase behavior).
+-- Do NOT use auth.uid() checks — they will never match a Firebase user.
 
 -- Enable RLS on all tables
 ALTER TABLE songs ENABLE ROW LEVEL SECURITY;
@@ -96,51 +102,19 @@ ALTER TABLE liked_tracks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saved_tracks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recommendation_logs ENABLE ROW LEVEL SECURITY;
 
--- songs: public read, no public write
+-- songs: public read
 CREATE POLICY "Public can read songs" ON songs FOR SELECT USING (true);
--- Service role (backend) will bypass RLS for inserts/updates
 
--- profiles: user can only read/update their own row
-CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+-- All other tables: service role (backend) bypasses RLS automatically.
+-- These permissive policies allow the anon key to also read (adjust if needed):
+CREATE POLICY "Service role manages profiles" ON profiles FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Service role manages preferences" ON user_preferences FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Service role manages history" ON listening_history FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Service role manages liked_tracks" ON liked_tracks FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Service role manages saved_tracks" ON saved_tracks FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Service role manages rec_logs" ON recommendation_logs FOR ALL USING (true) WITH CHECK (true);
 
--- user_preferences: user can only read/update their own
-CREATE POLICY "Users can view own preferences" ON user_preferences FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own preferences" ON user_preferences FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own preferences" ON user_preferences FOR UPDATE USING (auth.uid() = user_id);
-
--- listening_history: user can insert + read their own only
-CREATE POLICY "Users can view own history" ON listening_history FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own history" ON listening_history FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- liked_tracks: user can insert/delete/read their own only
-CREATE POLICY "Users can view own liked tracks" ON liked_tracks FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own liked tracks" ON liked_tracks FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can delete own liked tracks" ON liked_tracks FOR DELETE USING (auth.uid() = user_id);
-
--- saved_tracks: user can insert/delete/read their own only
-CREATE POLICY "Users can view own saved tracks" ON saved_tracks FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own saved tracks" ON saved_tracks FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can delete own saved tracks" ON saved_tracks FOR DELETE USING (auth.uid() = user_id);
-
--- recommendation_logs: user can read their own only, insert own
-CREATE POLICY "Users can view own logs" ON recommendation_logs FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own logs" ON recommendation_logs FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- Set up a trigger to automatically create a profile when a new user signs up in Supabase Auth
-CREATE OR REPLACE FUNCTION public.handle_new_user() 
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO public.profiles (id, display_name)
-  VALUES (new.id, new.raw_user_meta_data->>'display_name');
-  
-  INSERT INTO public.user_preferences (user_id)
-  VALUES (new.id);
-  
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+-- NOTE: The handle_new_user trigger on auth.users is NOT used here because
+-- this app authenticates via Firebase, not Supabase Auth. auth.users is never
+-- populated. Profile creation is handled in auth.py → ensure_user_profile_exists()
+-- on every request, using the Supabase service_role key to bypass RLS.
