@@ -10,7 +10,9 @@ router = APIRouter(prefix="/user", tags=["user"])
 
 @router.get("/profile/{user_id}", response_model=UserProfile)
 def get_profile(user_id: str, current_user: str = Depends(get_current_user_id)):
-    if user_id != current_user:
+    if user_id == "me":
+        user_id = current_user
+    elif user_id != current_user:
         raise HTTPException(status_code=403, detail="Not authorized to access this profile")
     
     db = get_db()
@@ -75,7 +77,9 @@ def unsave_song(song_id: str, current_user: str = Depends(get_current_user_id)):
 
 @router.get("/history/{user_id}")
 def get_user_history(user_id: str, current_user: str = Depends(get_current_user_id)):
-    if user_id != current_user:
+    if user_id == "me":
+        user_id = current_user
+    elif user_id != current_user:
         raise HTTPException(status_code=403, detail="Not authorized")
     db = get_db()
     res = db.table("listening_history").select("songs(*)").eq("user_id", user_id).order("played_at", desc=True).limit(50).execute()
@@ -83,7 +87,9 @@ def get_user_history(user_id: str, current_user: str = Depends(get_current_user_
 
 @router.get("/likes/{user_id}")
 def get_user_likes(user_id: str, current_user: str = Depends(get_current_user_id)):
-    if user_id != current_user:
+    if user_id == "me":
+        user_id = current_user
+    elif user_id != current_user:
         raise HTTPException(status_code=403, detail="Not authorized")
     db = get_db()
     res = db.table("liked_tracks").select("songs(*)").eq("user_id", user_id).order("liked_at", desc=True).execute()
@@ -91,7 +97,9 @@ def get_user_likes(user_id: str, current_user: str = Depends(get_current_user_id
 
 @router.get("/saves/{user_id}")
 def get_user_saves(user_id: str, current_user: str = Depends(get_current_user_id)):
-    if user_id != current_user:
+    if user_id == "me":
+        user_id = current_user
+    elif user_id != current_user:
         raise HTTPException(status_code=403, detail="Not authorized")
     db = get_db()
     res = db.table("saved_tracks").select("songs(*)").eq("user_id", user_id).order("saved_at", desc=True).execute()
